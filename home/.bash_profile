@@ -154,7 +154,7 @@ alias gsets="git config --list"
 alias gc="git commit"
 
 # homesick
-alias hslink="homesick symlink dotfiles"
+alias hslink="homesick symlink telkins/dotfiles"
 
 # ...
 
