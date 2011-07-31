@@ -1,1 +1,0 @@
-/Users/telkins/.homesick/repos/dotfiles/home/.vim
