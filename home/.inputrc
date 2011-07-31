@@ -1,0 +1,16 @@
+# https://wiki.ubuntu.com/Spec/EnhancedBash
+$if Bash
+    # Search history back and forward using page-up and page-down
+    # http://codeinthehole.com/archives/17-The-most-important-command-line-tip-incremental-history-searching-with-.inputrc.html
+    "\e[A": history-search-backward
+    "\e[B": history-search-forward
+    "\e[C": forward-char
+    "\e[D": backward-char
+
+    # Completion
+    set match-hidden-files off
+    set page-completions off
+    set completion-query-items 350
+    set completion-ignore-case on
+    set show-all-if-ambiguous on
+$endif
