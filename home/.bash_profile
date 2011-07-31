@@ -21,6 +21,7 @@ export PHP_BIN=$ZF_BIN/php
 # path setup
 ########################################################################################
 
+export HS=~/.homesick
 export PATH=$ZF_BIN:$PATH
 #export PATH=$PATH:~/bin
 
@@ -155,6 +156,7 @@ alias gc="git commit"
 
 # homesick
 alias hslink="homesick symlink telkins/dotfiles"
+alias cdhs="cd $HS/repos/telkins/dotfiles"
 
 # ...
 
