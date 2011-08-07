@@ -2,8 +2,15 @@
 # environment variables
 ########################################################################################
 
+# color library
+. ~/.bash_profile.d/utils/colors.sh
+
 # editor
 export EDITOR=vim
+export HGMERGE=vimdiff
+
+# less -- EXAMPLE: "phpunit.xml.dist lines 1-29/61 byte 1099/2545 43%"
+export LESS="--hilite-search --ignore-case --LONG-PROMPT --QUIET --HILITE-UNREAD --follow-name -PM ?f%f .?m(file %i of %m) .?ltlines %lt-%lb?L/%L. .byte %bB?s/%s. ?e(END) :?pB%pB\%..%t"
 
 # zend server
 export ZF_HOME=/usr/local/zend
@@ -13,23 +20,42 @@ export ZF_BIN=$ZF_HOME/bin
 # manual pages
 export MANPATH=$MANPATH:/usr/local/man
 
-# php
-#export PHP_HOME=`brew --prefix php`
+# php (if we have brew installed, use it to find home directory, otherwise, locate the binary with which)
+export PHP_HOME=$(which brew > /dev/null && brew --prefix php || which php | sed -e 's@/bin/php@@')
 export PHP_BIN=$ZF_BIN/php
+
+########################################################################################
+# Set a large history in order to save a large number of commands to search.
+########################################################################################
+
+export HISTSIZE=1000000
+export HISTFILESIZE=1000000000
 
 ########################################################################################
 # path setup
 ########################################################################################
 
 export HS=~/.homesick
+
+# priority goes to project level ./bin, then $HOME/local/bin, then ...
+#export PATH=./bin:~/local/bin:/usr/local/bin:/usr/local/sbin:$PATH
+
+# add PHP to path
 export PATH=$ZF_BIN:$PATH
-#export PATH=$PATH:~/bin
 
 LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ZF_HOME/lib
 
 ########################################################################################
+# before each prompt run, execute the following to set the title-bar
+# REF: http://hints.macworld.com/article.php?story=20031015173932306
+########################################################################################
+# NOTE: For this to work, you have to first, execute the following inside your project
+# git config project.info.name Some_Cool_Project_Name
+
+export PROMPT_COMMAND='echo -ne "\033]0;$(git config --get project.info.name || echo -ne "$USER@$HOSTNAME")\007"'
+
+########################################################################################
 # bash prompt / terminal customizations
-# NOTE: at some point, sprinkle some of this in: https://github.com/jimeh/git-aware-prompt
 ########################################################################################
 
 # this should get deleted at each sourcing of .bash_profile
@@ -37,16 +63,17 @@ PROMPT_CACHE_DIR=~/.prompt_cache.d
 if [ -d $PROMPT_CACHE_DIR ]; then
     rm -Rf $PROMPT_CACHE_DIR
 fi
-
 mkdir -p $PROMPT_CACHE_DIR
-#compass version|head -n1                     >> "$PROMPT_CACHE_DIR/compass.txt"
-$PHP_BIN -v 2>&1|grep -i cli|cut -d' ' -f1-2 >> "$PROMPT_CACHE_DIR/php.txt"
-#~/.rvm/bin/rvm-prompt i v g                  >> "$PROMPT_CACHE_DIR/ruby.txt"
-#python --version 2>&1|grep -i Python         >> "$PROMPT_CACHE_DIR/python.txt"
-#scala -version 2>&1|cut -d' ' -f1,5          >> "$PROMPT_CACHE_DIR/scala.txt"
-#node -v 2>&1                                 >> "$PROMPT_CACHE_DIR/nodejs.txt"
 
-function prompt {
+# create the cached portions
+if [ -x $PHP_BIN ]; then
+    $PHP_BIN -v 2>&1|grep -i cli|cut -d' ' -f1-2    > "$PROMPT_CACHE_DIR/php.txt"
+else
+    touch "$PROMPT_CACHE_DIR/php.txt"
+    echo "PHP (not installed)"                      > "$PROMPT_CACHE_DIR/php.txt"
+fi
+
+function set_prompt {
   local LIGHT_RED="\e[\033[1;31m\]"
   local LIGHT_GREEN="\e[\033[1;32m\]"
   local LIGHT_GRAY="\e[1;30m\]"
@@ -54,32 +81,22 @@ function prompt {
   local YELLOWISH="\e[\e[1;30m\]\e[1;33m\]"
   local NO_COLOUR="\e[\033[0m\]"
 
-  local TITLEBAR='\[\033]0;\h\007\]'
-  local TIME="\T"
-
-  #local COMPASSVER=$(cat "$PROMPT_CACHE_DIR/compass.txt")
-  local PHPVER=$(cat "$PROMPT_CACHE_DIR/php.txt")
-  #local RUBYVER=$(cat "$PROMPT_CACHE_DIR/ruby.txt")
-  #local PYTHONVER=$(cat "$PROMPT_CACHE_DIR/python.txt")
-  #local SCALAVER=$(cat "$PROMPT_CACHE_DIR/scala.txt")
-  #local NODEJSVER=$(cat "$PROMPT_CACHE_DIR/nodejs.txt")
-
-  local GITINFO="\$(__git_ps1 ' (Git Project Branch: %s)')"
-
-  #source ~/bin/.git-completion.bash
+  local    PHPVER=$(cat "$PROMPT_CACHE_DIR/php.txt")
+  local      TIME="\T"
+  local SHELLINFO="\s \V"
+  local   GITINFO="\$(__git_ps1)"
 
   export GIT_PS1_SHOWDIRTYSTATE=true
   export GIT_PS1_SHOWUNTRACKEDFILES=true
   export GIT_PS1_SHOWUPSTREAM=auto
   export GIT_PS1_SHOWSTASHSTATE=true
 
-#  export PS1="$TITLEBAR"
-  #export PS1="$PS1$LIGHT_GRAY[ $LIGHT_BLUE$TIME $YELLOWISH\u@\H$LIGHT_BLUE \w/$LIGHT_GRAY ]\n"
-#  export PS1="$PS1$LIGHT_GRAY[ $LIGHT_BLUE \w/$LIGHT_GRAY ]\n"
-  #export PS1="$PS1[ $LIGHT_RED$RUBYVER, $COMPASSVER, $PHPVER, $NODEJSVER, $SCALAVER, $PYTHONVER$LIGHT_GRAY ]"
-#  export PS1="$PS1[ $LIGHT_RED$PHPVER$LIGHT_GRAY ]"
-  #export PS1="$PS1$LIGHT_GREEN$GITINFO\n"
-#  export PS1="$PS1$LIGHT_GRAY[ $LIGHT_BLUE\s \V$LIGHT_GRAY ] $LIGHT_GREEN\$ "
+  local  DEFAULT_PS1=$PS1
+  #export PS1="$LIGHT_GRAY[ $LIGHT_BLUE$TIME $YELLOWISH\u@\H$LIGHT_BLUE \w/$LIGHT_GRAY ]\n"
+  export PS1="$LIGHT_GRAY[ $LIGHT_BLUE$TIME $YELLOWISH\u$LIGHT_BLUE \w/$LIGHT_GRAY ]\n"
+  export PS1="$PS1[ $LIGHT_RED$SHELLINFO, $PHPVER $LIGHT_GRAY ]"
+  export PS1="$PS1$LIGHT_GREEN$GITINFO\n"
+  export PS1=$PS1$DEFAULT_PS1
 }
 
 export TERM="xterm-color"
@@ -87,7 +104,15 @@ export CLICOLOR=1
 export LSCOLORS=ExFxCxDxBxegedabagacad
 
 # call the "prompt" function
-#prompt
+set_prompt
+
+########################################################################################
+# source all .sh files under the 'helpers' and 'options' directories
+########################################################################################
+
+for file in ~/.bash_profile.d/options/*.sh; do . $file; done
+for file in ~/.bash_profile.d/helpers/*.sh; do . $file; done
+for file in ~/.bash_profile.d/bash_completion/*.sh; do . $file; done
 
 ########################################################################################
 # vi/vim options
